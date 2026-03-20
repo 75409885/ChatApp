@@ -42,7 +42,16 @@ export const useFriendStore = defineStore('friends', {
       this.loading = true
       try {
         const { data } = await getFriends()
-        this.friendsList = data
+        // 客户端二次去重，确保 UI 呈现唯一性
+        const uniqueFriends = []
+        const seenIds = new Set()
+        data.forEach(f => {
+          if (!seenIds.has(f.id)) {
+            seenIds.add(f.id)
+            uniqueFriends.push(f)
+          }
+        })
+        this.friendsList = uniqueFriends
       } finally {
         this.loading = false
       }

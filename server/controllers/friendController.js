@@ -155,16 +155,19 @@ const getFriends = async (req, res, next) => {
     });
 
     // 格式化输出，提取对方的个人信息
-    const friends = friendships.map((f) => {
+    const friendsMap = new Map();
+    friendships.forEach((f) => {
       const friendData = f.user_id === userId ? f.receiver : f.requester;
-      return {
-        friendshipId: f.id,
-        remark: f.remark,
-        ...friendData.get(),
-      };
+      if (friendData && !friendsMap.has(friendData.id)) {
+        friendsMap.set(friendData.id, {
+          friendshipId: f.id,
+          remark: f.remark,
+          ...friendData.get(),
+        });
+      }
     });
 
-    res.json({ code: 200, data: friends });
+    res.json({ code: 200, data: Array.from(friendsMap.values()) });
   } catch (error) {
     next(error);
   }

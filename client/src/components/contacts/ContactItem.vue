@@ -6,6 +6,7 @@
 
 import { computed } from 'vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * 组件属性定义
@@ -60,7 +61,9 @@ const displayUser = computed(() => {
   if (props.mode === 'friend') return props.contact 
   
   if (props.contact.type === 'private' && props.contact.participantDetails) {
-    return props.contact.otherUser || props.contact.participantDetails[0]
+    const authStore = useAuthStore()
+    // 从参与者列表中检索非当前用户的实体详情
+    return props.contact.participantDetails.find(p => p.id !== authStore.currentUserId) || props.contact.participantDetails[0]
   }
   return { username: '群聊', avatar: '' } 
 })

@@ -65,20 +65,24 @@ const scrollToBottom = () => {
 
 /**
  * 监听活跃会话变更
- * 执行滚动复位并触发消息已读上报
+ * 执行滚动复位、加入 Socket 频道并触发消息已读上报
  */
 watch(() => activeConversation.value?._id, (newId) => {
   if (newId) {
-    nextTick(() => {
-      scrollToBottom() 
+    const socket = getSocket()
+    if (socket) {
+      // 核心修复：加入特定会话的实时通信房间
+      socket.emit('join_conversation', newId)
       
-      const socket = getSocket()
-      if (socket && activeConversation.value?.myUnreadCount > 0) {
-        socket.emit('mark_read', { conversationId: newId })
-      }
-    })
+      nextTick(() => {
+        scrollToBottom() 
+        if (activeConversation.value?.myUnreadCount > 0) {
+          socket.emit('mark_read', { conversationId: newId })
+        }
+      })
+    }
   }
-})
+}, { immediate: true }) // immediate: true 确保组件挂载时若已有活跃会话也能立即加入房间
 
 /**
  * 监听消息增量
@@ -129,18 +133,18 @@ const handleScroll = (e) => {
     
     <!-- 会话头部：展示用户信息及功能入口 -->
     <div class="chat-header">
-      <div class="chat-title flex items-center gap-3">
+      <div class="chat-title">
         <UserAvatar v-if="otherUser" :user="otherUser" :size="40" :showStatus="true" />
-        <div>
-          <h3 class="m-0 text-base font-semibold text-white">
+        <div class="title-info">
+          <h3 class="username-display">
             {{ activeConversation.type === 'private' ? otherUser?.username : activeConversation.groupName }}
           </h3>
-          <p class="m-0 text-xs text-gray-400">
+          <p class="status-display">
             <template v-if="typingUsers.length > 0">
-              <span class="text-indigo-400 italic">{{ typingUsers.join(', ') }} 正在输入...</span>
+              <span class="typing-indicator">{{ typingUsers.join(', ') }} 正在输入...</span>
             </template>
             <template v-else-if="activeConversation.type === 'private'">
-              <span v-if="otherUser?.status === 'online'" class="text-emerald-500">在线</span>
+              <span v-if="otherUser?.status === 'online'" class="online-status">在线</span>
               <span v-else>离线</span>
             </template>
           </p>
@@ -159,7 +163,7 @@ const handleScroll = (e) => {
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :icon="'User'">查看资料</el-dropdown-item>
-              <el-dropdown-item :icon="'Delete'" divided class="text-red-500">清空聊天记录</el-dropdown-item>
+              <el-dropdown-item :icon="'Delete'" divided style="color: #ef4444;">清空聊天记录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -212,12 +216,53 @@ const handleScroll = (e) => {
 
 .chat-header {
   height: 70px;
+  min-height: 70px;
+  flex-shrink: 0;
   padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-panel);
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.chat-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.title-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.username-display {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.status-display {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.typing-indicator {
+  color: #818cf8;
+  font-style: italic;
+}
+
+.online-status {
+  color: #10b981;
 }
 
 .header-actions .el-button {

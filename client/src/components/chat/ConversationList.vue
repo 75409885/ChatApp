@@ -29,7 +29,7 @@ const handleConversationClick = (conv) => {
 <template>
   <div class="conversation-list-container">
     <!-- 列表头部面板 -->
-    <div class="header-section text-center">
+    <div class="header-section">
       <h2>聊天记录</h2>
     </div>
     
@@ -71,6 +71,7 @@ const handleConversationClick = (conv) => {
 .header-section {
   padding: 20px 16px 12px;
   border-bottom: 1px solid var(--border-color);
+  text-align: center;
 }
 
 .header-section h2 {

@@ -118,7 +118,7 @@ const startChat = async (friend) => {
 
 <template>
   <div class="contact-list-container">
-    <div class="header-section text-center">
+    <div class="header-section">
       <h2>联系人</h2>
     </div>
     
@@ -129,12 +129,12 @@ const startChat = async (friend) => {
     />
     
     <!-- 导航切换区 -->
-    <div class="tabs-wrapper px-4 py-2 border-b border-gray-800">
+    <div class="tabs-wrapper">
       <el-radio-group v-model="activeTab" size="small" class="w-full tabs-group">
         <el-radio-button label="friends" class="flex-1">
           我的好友 ({{ friendStore.friendsList.length }})
         </el-radio-button>
-        <el-radio-button label="requests" class="flex-1 relative">
+        <el-radio-button label="requests" class="flex-1 nav-requests">
           新朋友
           <span v-if="friendStore.requestsCount > 0" class="badge-dot"></span>
         </el-radio-button>
@@ -179,12 +179,12 @@ const startChat = async (friend) => {
       
       <!-- 全局检索结果预览 -->
       <template v-else-if="activeTab === 'search'">
-        <div v-if="searching" class="p-6 text-center text-gray-400">
+        <div v-if="searching" class="search-loading">
           <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-          <p class="mt-2">正在查询...</p>
+          <p>正在查询...</p>
         </div>
-        <div v-else-if="searchResults.length > 0" class="p-3">
-          <h4 class="text-sm font-semibold text-gray-400 mb-3 ml-1">全网搜索结果：</h4>
+        <div v-else-if="searchResults.length > 0" class="search-results-wrapper">
+          <h4 class="search-title">全网搜索结果：</h4>
           <div v-for="user in searchResults" :key="user.id" class="search-result-item">
             <ContactItem :contact="user" mode="friend" :isActive="false" />
             <el-button type="primary" size="small" plain @click="sendRequestToUser(user.id)" class="add-btn">
@@ -214,16 +214,21 @@ const startChat = async (friend) => {
   background-color: var(--bg-panel);
   border-right: 1px solid var(--border-color);
 }
-.header-section { padding: 20px 16px 12px; }
+.header-section { padding: 20px 16px 12px; text-align: center; }
 .header-section h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--text-primary); }
 .tabs-wrapper { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
 .tabs-group { display: flex; width: 100%; }
+.nav-requests { position: relative; }
 :deep(.el-radio-button__inner) { width: 100%; background-color: var(--bg-dark); border-color: var(--border-color); color: var(--text-secondary); }
 :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) { background-color: var(--primary-color); border-color: var(--primary-color); box-shadow: -1px 0 0 0 var(--primary-color); }
 .badge-dot { position: absolute; top: 8px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; }
 .list-content { flex: 1; overflow-y: auto; }
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
+.search-loading { padding: 24px; text-align: center; color: var(--text-secondary); }
+.search-loading p { margin-top: 8px; font-size: 14px; }
+.search-results-wrapper { padding: 12px; }
+.search-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; margin-left: 4px; }
 .search-result-item { position: relative; background-color: var(--bg-hover); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
 .add-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
 </style>
