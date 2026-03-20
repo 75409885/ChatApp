@@ -5,7 +5,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { useFriendStore } from '@/stores/friend'
+import { useFriendStore } from '@/stores/friends'
 import { useChatStore } from '@/stores/chat'
 import SearchBar from '@/components/common/SearchBar.vue'
 import ContactItem from '@/components/contacts/ContactItem.vue'
