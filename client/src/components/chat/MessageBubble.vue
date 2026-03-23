@@ -40,6 +40,19 @@ const formatTime = (isoString) => {
   const date = new Date(isoString)
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
+
+/**
+ * 获取正确的文件访问 URL (区分 base64 或 相对路径)
+ * @param {string} url - 文件 url 或 base64 data URI
+ */
+const getFileUrl = (url) => {
+  if (!url) return ''
+  // 如果是 Base64 数据或完整的 HTTP(S) 地址，则直接返回
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  return `http://localhost:3000${url.startsWith('/') ? '' : '/'}${url}`
+}
 </script>
 
 <template>
@@ -77,8 +90,8 @@ const formatTime = (isoString) => {
         <!-- 图片类型渲染（集成预览功能） -->
         <template v-else-if="message.type === 'image'">
           <el-image 
-            :src="`http://localhost:3000${message.fileInfo.fileUrl}`" 
-            :preview-src-list="[`http://localhost:3000${message.fileInfo.fileUrl}`]"
+            :src="getFileUrl(message.fileInfo.fileUrl)" 
+            :preview-src-list="[getFileUrl(message.fileInfo.fileUrl)]"
             fit="cover"
             class="image-content"
           />
@@ -86,7 +99,7 @@ const formatTime = (isoString) => {
         
         <!-- 文件类型渲染 -->
         <template v-else-if="message.type === 'file'">
-          <a :href="`http://localhost:3000${message.fileInfo.fileUrl}`" target="_blank" class="file-content">
+          <a :href="getFileUrl(message.fileInfo.fileUrl)" :download="message.fileInfo.fileName" target="_blank" class="file-content">
             <el-icon :size="24"><Document /></el-icon>
             <div class="file-details">
               <span class="file-name">{{ message.fileInfo.fileName }}</span>
