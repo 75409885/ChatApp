@@ -165,6 +165,20 @@ const initSocket = (io) => {
       }
     });
 
+    // 5. 修改在线状态
+    socket.on('change_status', async (newStatus) => {
+      try {
+        const validStatuses = ['online', 'offline', 'busy', 'away'];
+        if (validStatuses.includes(newStatus)) {
+          await User.update({ status: newStatus }, { where: { id: userId } });
+          console.log(`[Socket] Status changed: ${socket.username}(${userId}) -> ${newStatus}`);
+          socket.broadcast.emit('user_status_change', { userId, status: newStatus });
+        }
+      } catch (error) {
+        console.error('[Socket] Failed to change status:', error.message);
+      }
+    });
+
     // 处理断开连接
     socket.on('disconnect', async () => {
       console.log(`[Socket] Disconnected: ${socket.username}(${userId})`);

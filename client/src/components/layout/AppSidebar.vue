@@ -12,6 +12,7 @@ import { useChatStore } from '@/stores/chat'
 import { useFriendStore } from '@/stores/friends'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { ElMessageBox } from 'element-plus'
+import { getSocket } from '@/socket'
 
 const router = useRouter()
 const route = useRoute()
@@ -54,6 +55,33 @@ const switchTab = (tab) => {
   uiStore.setActiveTab(tab)
   if (route.name !== 'home') {
     router.push('/')
+  }
+}
+
+/**
+ * 切换用户在线状态
+ */
+const statusMap = {
+  online: '在线',
+  busy: '忙碌',
+  away: '离开',
+  offline: '隐身'
+}
+
+const statusColorMap = {
+  online: '#10b981', // emerald-500
+  busy: '#ef4444',   // red-500
+  away: '#f59e0b',   // amber-500
+  offline: '#94a3b8' // slate-400
+}
+
+const handleStatusChange = (command) => {
+  if (authStore.user) {
+    authStore.user.status = command
+    const socket = getSocket()
+    if (socket) {
+      socket.emit('change_status', command)
+    }
   }
 }
 </script>
@@ -121,7 +149,21 @@ const switchTab = (tab) => {
         <UserAvatar :user="currentUser" :size="40" :showStatus="true" />
         <div class="user-info" v-if="!uiStore.isSidebarCollapsed">
           <div class="username">{{ currentUser.username }}</div>
-          <div class="status-text">在线</div>
+          <el-dropdown @command="handleStatusChange" trigger="click" placement="top-start">
+            <div class="status-dropdown">
+              <div class="status-dot" :style="{ backgroundColor: statusColorMap[currentUser.status || 'online'] }"></div>
+              <div class="status-text" :style="{ color: statusColorMap[currentUser.status || 'online'] }">{{ statusMap[currentUser.status || 'online'] }}</div>
+              <el-icon class="status-icon" :style="{ color: statusColorMap[currentUser.status || 'online'] }"><ArrowDown /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="online">在线</el-dropdown-item>
+                <el-dropdown-item command="busy">忙碌</el-dropdown-item>
+                <el-dropdown-item command="away">离开</el-dropdown-item>
+                <el-dropdown-item command="offline">隐身</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
       
@@ -261,9 +303,30 @@ const switchTab = (tab) => {
   overflow: hidden;
 }
 
+.status-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  margin-top: 2px;
+  outline: none;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
 .status-text {
   font-size: 12px;
-  color: var(--success-color);
+  transition: color 0.3s ease;
+}
+
+.status-icon {
+  font-size: 12px;
+  transition: color 0.3s ease;
 }
 
 .logout-btn {

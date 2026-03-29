@@ -87,6 +87,12 @@ export const connectSocket = (token) => {
     friendStore.updateUserStatus(userId, 'offline')
   })
 
+  /** 同步好友状态修改 */
+  socket.on('user_status_change', ({ userId, status }) => {
+    const friendStore = useFriendStore()
+    friendStore.updateUserStatus(userId, status)
+  })
+
   /** 实时好友申请接收 */
   socket.on('friend_request', (request) => {
     const friendStore = useFriendStore()
