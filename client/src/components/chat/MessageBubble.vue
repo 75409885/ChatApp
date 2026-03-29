@@ -38,7 +38,15 @@ const isMine = computed(() => {
 const formatTime = (isoString) => {
   if (!isoString) return ''
   const date = new Date(isoString)
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const today = new Date()
+
+  if (date.toDateString() === today.toDateString()) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+  if (date.getFullYear() === today.getFullYear()) {
+    return `${date.getMonth() + 1}-${date.getDate()}`
+  }
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
 /**
@@ -57,17 +65,12 @@ const getFileUrl = (url) => {
 
 <template>
   <div class="message-wrapper" :class="{ 'is-mine': isMine }">
-    
+
     <!-- 头像渲染区域 -->
     <div class="avatar-container">
-      <UserAvatar 
-        v-if="senderUser" 
-        :user="senderUser" 
-        :size="36" 
-        :showStatus="false" 
-      />
+      <UserAvatar v-if="senderUser" :user="senderUser" :size="36" :showStatus="false" />
     </div>
-    
+
     <!-- 内容展示区域 -->
     <div class="message-content">
       <!-- 消息元信息头部 -->
@@ -78,29 +81,28 @@ const getFileUrl = (url) => {
       <div class="message-header mine" v-else-if="isMine">
         <span class="time">{{ formatTime(message.createdAt) }}</span>
       </div>
-      
+
       <!-- 气泡主体：基于内容类型动态分发渲染逻辑 -->
       <div class="bubble glass-panel">
-        
+
         <!-- 文本类型渲染 -->
         <template v-if="message.type === 'text'">
           <span class="text-content">{{ message.content }}</span>
         </template>
-        
+
         <!-- 图片类型渲染（集成预览功能） -->
         <template v-else-if="message.type === 'image'">
-          <el-image 
-            :src="getFileUrl(message.fileInfo.fileUrl)" 
-            :preview-src-list="[getFileUrl(message.fileInfo.fileUrl)]"
-            fit="cover"
-            class="image-content"
-          />
+          <el-image :src="getFileUrl(message.fileInfo.fileUrl)"
+            :preview-src-list="[getFileUrl(message.fileInfo.fileUrl)]" fit="cover" class="image-content" />
         </template>
-        
+
         <!-- 文件类型渲染 -->
         <template v-else-if="message.type === 'file'">
-          <a :href="getFileUrl(message.fileInfo.fileUrl)" :download="message.fileInfo.fileName" target="_blank" class="file-content">
-            <el-icon :size="24"><Document /></el-icon>
+          <a :href="getFileUrl(message.fileInfo.fileUrl)" :download="message.fileInfo.fileName" target="_blank"
+            class="file-content">
+            <el-icon :size="24">
+              <Document />
+            </el-icon>
             <div class="file-details">
               <span class="file-name">{{ message.fileInfo.fileName }}</span>
               <span class="file-size">{{ (message.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
