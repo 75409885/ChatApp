@@ -131,7 +131,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--bg-dark), #1e1b4b);
+  background: linear-gradient(135deg, var(--bg-dark), var(--primary-light));
   position: relative;
   overflow: hidden;
 }
@@ -155,7 +155,7 @@ const handleLogin = async () => {
   position: absolute;
   width: 300px;
   height: 300px;
-  background: #ec4899;
+  background: var(--danger-color);
   border-radius: 50%;
   filter: blur(100px);
   opacity: 0.15;
@@ -169,7 +169,7 @@ const handleLogin = async () => {
   max-width: 420px;
   padding: 40px;
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 10;
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -187,7 +187,7 @@ const handleLogin = async () => {
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--primary-light);
   margin-bottom: 16px;
 }
 
@@ -235,7 +235,7 @@ const handleLogin = async () => {
 }
 
 .auth-footer a:hover {
-  color: #818cf8;
+  color: var(--primary-hover);
 }
 
 @keyframes slideUp {

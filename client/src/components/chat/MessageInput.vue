@@ -201,7 +201,7 @@ const handleFileUpload = async (event) => {
 
 .toolbar .el-button:hover {
   color: var(--primary-color);
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--primary-light);
 }
 
 .input-wrapper {

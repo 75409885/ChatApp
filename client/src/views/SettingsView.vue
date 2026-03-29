@@ -236,7 +236,7 @@ const toggleTheme = (val) => {
   border-top: none;
   border-left: none;
   border-right: none;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
   z-index: 10;
 }
 
@@ -244,7 +244,7 @@ const toggleTheme = (val) => {
   margin: 0 0 8px;
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #a5b4fc);
+  background: linear-gradient(135deg, var(--text-primary), var(--primary-color));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -296,7 +296,7 @@ const toggleTheme = (val) => {
 }
 
 .tab-list li.active {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--primary-light);
   color: var(--primary-color);
 }
 
@@ -376,7 +376,7 @@ const toggleTheme = (val) => {
   padding: 16px;
   background-color: var(--bg-panel);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
 }
 
 .setting-info h4 {
@@ -428,7 +428,7 @@ const toggleTheme = (val) => {
 }
 
 .danger-title {
-  color: #ef4444;
+  color: var(--danger-color);
   margin-bottom: 8px;
   font-weight: 600;
 }

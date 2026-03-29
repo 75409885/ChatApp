@@ -146,7 +146,7 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e1b4b, var(--bg-dark));
+  background: linear-gradient(135deg, var(--primary-light), var(--bg-dark));
   position: relative;
   overflow: hidden;
 }
@@ -156,7 +156,7 @@ const handleRegister = async () => {
   position: absolute;
   width: 400px;
   height: 400px;
-  background: #ec4899;
+  background: var(--danger-color);
   border-radius: 50%;
   filter: blur(100px);
   opacity: 0.15;
@@ -184,7 +184,7 @@ const handleRegister = async () => {
   max-width: 420px;
   padding: 40px;
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 10;
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -202,7 +202,7 @@ const handleRegister = async () => {
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background: rgba(236, 72, 153, 0.1);
+  background: var(--danger-light);
   margin-bottom: 16px;
 }
 
@@ -229,14 +229,14 @@ const handleRegister = async () => {
   height: 48px;
   font-size: 16px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #ec4899, var(--primary-color));
+  background: linear-gradient(135deg, var(--danger-color), var(--primary-color));
   border: none;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -10px rgba(236, 72, 153, 0.8);
+  box-shadow: 0 10px 20px -10px var(--danger-color);
 }
 
 .auth-footer {
@@ -247,14 +247,14 @@ const handleRegister = async () => {
 }
 
 .auth-footer a {
-  color: #ec4899;
+  color: var(--danger-color);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .auth-footer a:hover {
-  color: #f472b6;
+  opacity: 0.8;
 }
 
 @keyframes slideUp {

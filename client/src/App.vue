@@ -6,12 +6,17 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
 import { onMounted } from 'vue'
 
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 
-// 组件挂载时检查本地存储的令牌，尝试恢复用户登录状态
+// 组件挂载时检查本地存储的令牌，尝试恢复用户登录状态和主题设置
 onMounted(async () => {
+  // 初始化系统主题
+  uiStore.setTheme(uiStore.theme)
+  
   if (authStore.token) {
     await authStore.fetchCurrentUser()
   }

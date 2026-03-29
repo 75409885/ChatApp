@@ -1,19 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  /* Brand Colors */
   --primary-color: #6366f1;
   --primary-hover: #4f46e5;
+  --primary-light: rgba(99, 102, 241, 0.1);
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+
+  /* Light Theme (Default) */
+  --bg-dark: #f8fafc;        /* Main background */
+  --bg-panel: #ffffff;       /* Cards/Panels */
+  --bg-hover: #f1f5f9;       /* Hover state */
+  --text-primary: #0f172a;   /* Primary text */
+  --text-secondary: #64748b; /* Secondary text */
+  --border-color: #e2e8f0;   /* Borders */
+  
+  /* Chat specifics */
+  --message-sent: #6366f1;
+  --message-received: #f1f5f9;
+  
+  /* Glassmorphism Light */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-hover: rgba(0, 0, 0, 0.03);
+}
+
+html.dark {
+  /* Dark Theme */
   --bg-dark: #0f172a;
   --bg-panel: #1e293b;
   --bg-hover: #334155;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --border-color: #334155;
+  
+  /* Chat specifics */
   --message-sent: #6366f1;
   --message-received: #334155;
-}
 
-html.dark {
+  /* Glassmorphism Dark */
+  --glass-bg: rgba(30, 41, 59, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-hover: rgba(255, 255, 255, 0.03);
+
   background-color: var(--bg-dark);
   color: var(--text-primary);
 }
@@ -62,8 +93,8 @@ body {
 }
 
 .glass-panel {
-  background: rgba(30, 41, 59, 0.7);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
 }

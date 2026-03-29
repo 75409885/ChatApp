@@ -163,7 +163,7 @@ const handleScroll = (e) => {
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :icon="'User'">查看资料</el-dropdown-item>
-              <el-dropdown-item :icon="'Delete'" divided style="color: #ef4444;">清空聊天记录</el-dropdown-item>
+              <el-dropdown-item :icon="'Delete'" divided style="color: var(--danger-color);">清空聊天记录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -257,12 +257,12 @@ const handleScroll = (e) => {
 }
 
 .typing-indicator {
-  color: #818cf8;
+  color: var(--primary-color);
   font-style: italic;
 }
 
 .online-status {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .header-actions .el-button {
@@ -271,7 +271,7 @@ const handleScroll = (e) => {
 
 .header-actions .el-button:hover {
   color: var(--primary-color);
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--primary-light);
 }
 
 .messages-container {
@@ -283,7 +283,7 @@ const handleScroll = (e) => {
   position: relative;
   scroll-behavior: smooth;
   /* 基础背景渲染：径向渐变提升视觉层次 */
-  background-image: radial-gradient(circle at center, rgba(30, 41, 59, 0.3) 0%, transparent 100%);
+  background-image: radial-gradient(circle at center, var(--glass-border) 0%, transparent 100%);
 }
 
 .loading-more, .no-more {

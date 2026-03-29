@@ -221,7 +221,7 @@ const startChat = async (friend) => {
 .nav-requests { position: relative; }
 :deep(.el-radio-button__inner) { width: 100%; background-color: var(--bg-dark); border-color: var(--border-color); color: var(--text-secondary); }
 :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) { background-color: var(--primary-color); border-color: var(--primary-color); box-shadow: -1px 0 0 0 var(--primary-color); }
-.badge-dot { position: absolute; top: 8px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; }
+.badge-dot { position: absolute; top: 8px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background-color: var(--danger-color); }
 .list-content { flex: 1; overflow-y: auto; }
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }

@@ -162,7 +162,7 @@ const switchTab = (tab) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .logo-text {
@@ -214,7 +214,7 @@ const switchTab = (tab) => {
 }
 
 .nav-item.active {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--primary-light);
   color: var(--primary-color);
   font-weight: 500;
 }
@@ -226,7 +226,7 @@ const switchTab = (tab) => {
 
 .sidebar-footer {
   padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -238,7 +238,7 @@ const switchTab = (tab) => {
   gap: 12px;
   padding: 8px;
   border-radius: 12px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--glass-hover);
   white-space: nowrap;
 }
 
@@ -263,7 +263,7 @@ const switchTab = (tab) => {
 
 .status-text {
   font-size: 12px;
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .logout-btn {
@@ -280,8 +280,8 @@ const switchTab = (tab) => {
 }
 
 .logout-btn:hover {
-  color: #ef4444;
-  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+  background-color: var(--danger-light);
 }
 
 .ml-2 {

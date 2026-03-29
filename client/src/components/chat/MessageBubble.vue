@@ -159,7 +159,8 @@ const getFileUrl = (url) => {
 
 .time {
   font-size: 11px;
-  color: rgba(148, 163, 184, 0.7);
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .bubble {

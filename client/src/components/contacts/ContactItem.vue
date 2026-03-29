@@ -119,10 +119,10 @@ const displayUser = computed(() => {
   padding: 12px 16px;
   cursor: pointer;
   transition: background-color 0.2s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--glass-border);
 }
 .contact-item:hover { background-color: var(--bg-hover); }
-.contact-item.active { background-color: rgba(99, 102, 241, 0.1); }
+.contact-item.active { background-color: var(--primary-light); }
 .content { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .header { display: flex; justify-content: space-between; align-items: center; }
 
