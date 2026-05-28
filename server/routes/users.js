@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { searchUsers, updateProfile, getUserById } = require('../controllers/userController');
 const auth = require('../middleware/auth');
 
@@ -14,11 +15,14 @@ const auth = require('../middleware/auth');
 // 文件上传配置 (Multer)
 // ============================
 
+const uploadDir = path.join(__dirname, '../uploads');
+fs.mkdirSync(uploadDir, { recursive: true });
+
 // 配置磁盘存储策略
 const storage = multer.diskStorage({
   // 设置上传文件的保存路径
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadDir);
   },
   // 设置文件名，采用 用户ID + 时间戳 的组合以防止冲突
   filename: (req, file, cb) => {

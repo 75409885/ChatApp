@@ -7,6 +7,38 @@ const { Op } = require('sequelize');
 const Friendship = require('../models/mysql/Friendship');
 const User = require('../models/mysql/User');
 
+const USER_PUBLIC_FIELDS = ['id', 'username', 'avatar', 'signature', 'status'];
+
+const getPublicUser = async (userId) => {
+  return User.findByPk(userId, {
+    attributes: USER_PUBLIC_FIELDS,
+  });
+};
+
+const emitFriendRequest = async (req, friendship) => {
+  const io = req.app.get('io');
+  const requester = await getPublicUser(friendship.user_id);
+
+  if (io && requester) {
+    io.to(`user_${friendship.friend_id}`).emit('friend_request', {
+      ...friendship.get({ plain: true }),
+      requester: requester.get({ plain: true }),
+    });
+  }
+};
+
+const emitFriendAccepted = async (req, friendship) => {
+  const io = req.app.get('io');
+  const receiver = await getPublicUser(req.userId);
+
+  if (io && receiver) {
+    io.to(`user_${friendship.user_id}`).emit('friend_accepted', {
+      friendship: friendship.get({ plain: true }),
+      from: receiver.get({ plain: true }),
+    });
+  }
+};
+
 /**
  * 发送好友申请
  * @param {Object} req - Express 请求对象
@@ -15,9 +47,12 @@ const User = require('../models/mysql/User');
  */
 const sendRequest = async (req, res, next) => {
   try {
-    const { friendId } = req.body;
+    const friendId = Number(req.body.friendId);
     const userId = req.userId;
 
+    if (!Number.isInteger(friendId)) {
+      return res.status(400).json({ code: 400, message: '好友 ID 不合法' });
+    }
     if (userId === friendId) return res.status(400).json({ code: 400, message: '不能添加自己为好友' });
 
     const targetUser = await User.findByPk(friendId);
@@ -43,6 +78,7 @@ const sendRequest = async (req, res, next) => {
         existing.friend_id = friendId;
         existing.status = 'pending';
         await existing.save();
+        await emitFriendRequest(req, existing);
         return res.json({ code: 200, message: '好友请求已重新发送', data: existing });
       }
     }
@@ -53,6 +89,8 @@ const sendRequest = async (req, res, next) => {
       friend_id: friendId,
       status: 'pending',
     });
+
+    await emitFriendRequest(req, friendship);
 
     res.status(201).json({ code: 201, message: '好友请求已发送', data: friendship });
   } catch (error) {
@@ -80,6 +118,8 @@ const acceptRequest = async (req, res, next) => {
 
     friendship.status = 'accepted';
     await friendship.save();
+
+    await emitFriendAccepted(req, friendship);
 
     res.json({ code: 200, message: '已接受好友请求', data: friendship });
   } catch (error) {

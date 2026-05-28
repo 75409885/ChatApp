@@ -147,9 +147,13 @@ export const useChatStore = defineStore('chat', {
      * @param {string} conversationId - 所属会话 ID
      */
     receiveMessage(message, conversationId) {
+      const cachedList = this.messages[conversationId]?.list
+      const isDuplicate = cachedList?.some((item) => item._id === message._id)
+      if (isDuplicate) return
+
       // 1. 若当前已打开该会话缓存，推入新消息
-      if (this.messages[conversationId]) {
-        this.messages[conversationId].list.push(message)
+      if (cachedList) {
+        cachedList.push(message)
       }
       
       // 2. 更新摘要列表中的最后一条消息显示

@@ -27,6 +27,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  maxHttpBufferSize: 15 * 1024 * 1024,
   // 传输协议：优先使用 WebSocket，兼容 HTTP 轮询
   transports: ['websocket', 'polling'], 
 });

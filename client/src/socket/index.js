@@ -97,14 +97,16 @@ export const connectSocket = (token) => {
   socket.on('friend_request', (request) => {
     const friendStore = useFriendStore()
     friendStore.receiveFriendRequest(request)
-    ElMessage.info(`收到来自 ${request.from.username} 的好友请求`)
+    const requesterName = request.requester?.username || request.from?.username || '新用户'
+    ElMessage.info(`收到来自 ${requesterName} 的好友请求`)
   })
 
   /** 好友申请被接受提醒 */
   socket.on('friend_accepted', (data) => {
     const friendStore = useFriendStore()
     friendStore.fetchFriends() 
-    ElMessage.success(`${data.from.username} 接受了你的好友请求，立刻找他聊天吧！`)
+    const username = data.from?.username || '对方'
+    ElMessage.success(`${username} 接受了你的好友请求，立刻找他聊天吧！`)
   })
 
   return socket

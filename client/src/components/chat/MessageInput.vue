@@ -6,8 +6,6 @@
 
 import { ref } from 'vue'
 import { getSocket } from '@/socket'
-import { useAuthStore } from '@/stores/auth'
-import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 /**
@@ -19,8 +17,6 @@ const props = defineProps({
     required: true
   }
 })
-
-const authStore = useAuthStore()
 
 // 响应式消息内容模型
 const inputMsg = ref('')
@@ -116,6 +112,8 @@ const handleFileUpload = async (event) => {
             fileUrl: base64Data 
           }
         })
+      } else {
+        ElMessage.error('WebSocket 连接已断开，发送失败')
       }
       uploading.value = false
       event.target.value = '' 

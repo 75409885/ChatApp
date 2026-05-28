@@ -4,24 +4,39 @@
  * @description 聊天室核心窗口组件，负责消息流展示、自动滚动管理、分页加载及打字状态监测。
  */
 
-import { computed, ref, onMounted, watch, nextTick } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import MessageBubble from '@/components/chat/MessageBubble.vue'
 import MessageInput from '@/components/chat/MessageInput.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { getSocket } from '@/socket'
+import { ElMessage } from 'element-plus'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 
 // 消息容器 DOM 引用，用于操控滚动行为
 const messageContainer = ref(null)
+const localVideoRef = ref(null)
+const remoteVideoRef = ref(null)
 
 const activeConversation = computed(() => chatStore.activeConversation)
 const messages = computed(() => chatStore.activeMessages)
 const hasMore = computed(() => chatStore.hasMoreMessages)
 const isLoading = computed(() => chatStore.loadingMessages)
+
+const callVisible = ref(false)
+const callDirection = ref('outgoing')
+const callType = ref('audio')
+const callStatus = ref('')
+const callPeer = ref(null)
+const remoteStream = ref(null)
+const isMuted = ref(false)
+const isCameraOff = ref(false)
+
+let localStream = null
+let peerConnection = null
 
 /**
  * 过滤并获取当前会话中正在输入的其他用户列表
@@ -63,6 +78,253 @@ const scrollToBottom = () => {
   }
 }
 
+const markActiveConversationRead = () => {
+  const conversationId = activeConversation.value?._id
+  const socket = getSocket()
+  if (socket && conversationId) {
+    socket.emit('mark_read', { conversationId })
+  }
+}
+
+const syncMediaElements = async () => {
+  await nextTick()
+  if (localVideoRef.value && localStream) {
+    localVideoRef.value.srcObject = localStream
+  }
+  if (remoteVideoRef.value && remoteStream.value) {
+    remoteVideoRef.value.srcObject = remoteStream.value
+  }
+}
+
+const getMediaStream = async (type) => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error('当前浏览器不支持音视频采集')
+  }
+
+  return navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: type === 'video'
+  })
+}
+
+const cleanupCall = () => {
+  if (peerConnection) {
+    peerConnection.close()
+    peerConnection = null
+  }
+
+  if (localStream) {
+    localStream.getTracks().forEach((track) => track.stop())
+    localStream = null
+  }
+
+  remoteStream.value = null
+  callVisible.value = false
+  callStatus.value = ''
+  callPeer.value = null
+  isMuted.value = false
+  isCameraOff.value = false
+}
+
+const createPeerConnection = (targetUserId) => {
+  const socket = getSocket()
+  const conversationId = activeConversation.value?._id
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  })
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate && socket && conversationId) {
+      socket.emit('call_signal', {
+        conversationId,
+        targetUserId,
+        signal: { candidate: event.candidate }
+      })
+    }
+  }
+
+  pc.ontrack = (event) => {
+    remoteStream.value = event.streams[0]
+    syncMediaElements()
+    callStatus.value = '通话中'
+  }
+
+  localStream?.getTracks().forEach((track) => {
+    pc.addTrack(track, localStream)
+  })
+
+  peerConnection = pc
+  return pc
+}
+
+const startCall = async (type) => {
+  const socket = getSocket()
+  if (!socket || !activeConversation.value || !otherUser.value) {
+    ElMessage.error('当前无法发起通话')
+    return
+  }
+
+  try {
+    callType.value = type
+    callDirection.value = 'outgoing'
+    callPeer.value = otherUser.value
+    callStatus.value = '等待对方接听...'
+    callVisible.value = true
+    localStream = await getMediaStream(type)
+    await syncMediaElements()
+
+    createPeerConnection(otherUser.value.id)
+    socket.emit('call_invite', {
+      conversationId: activeConversation.value._id,
+      callType: type
+    })
+  } catch (error) {
+    cleanupCall()
+    ElMessage.error(error.message || '无法获取麦克风或摄像头权限')
+  }
+}
+
+const acceptCall = async () => {
+  const socket = getSocket()
+  if (!socket || !activeConversation.value || !callPeer.value) return
+
+  try {
+    localStream = await getMediaStream(callType.value)
+    callDirection.value = 'active'
+    await syncMediaElements()
+    createPeerConnection(callPeer.value.id)
+    callStatus.value = '正在连接...'
+    socket.emit('call_answer', {
+      conversationId: activeConversation.value._id,
+      targetUserId: callPeer.value.id,
+      accepted: true,
+      callType: callType.value
+    })
+  } catch (error) {
+    ElMessage.error(error.message || '无法接听通话')
+    socket.emit('call_answer', {
+      conversationId: activeConversation.value._id,
+      targetUserId: callPeer.value.id,
+      accepted: false,
+      callType: callType.value
+    })
+    cleanupCall()
+  }
+}
+
+const rejectCall = () => {
+  const socket = getSocket()
+  if (socket && activeConversation.value && callPeer.value) {
+    socket.emit('call_answer', {
+      conversationId: activeConversation.value._id,
+      targetUserId: callPeer.value.id,
+      accepted: false,
+      callType: callType.value
+    })
+  }
+  cleanupCall()
+}
+
+const endCall = (notifyPeer = true) => {
+  const socket = getSocket()
+  if (notifyPeer && socket && activeConversation.value && callPeer.value) {
+    socket.emit('call_end', {
+      conversationId: activeConversation.value._id,
+      targetUserId: callPeer.value.id
+    })
+  }
+  cleanupCall()
+}
+
+const toggleMute = () => {
+  isMuted.value = !isMuted.value
+  localStream?.getAudioTracks().forEach((track) => {
+    track.enabled = !isMuted.value
+  })
+}
+
+const toggleCamera = () => {
+  isCameraOff.value = !isCameraOff.value
+  localStream?.getVideoTracks().forEach((track) => {
+    track.enabled = !isCameraOff.value
+  })
+}
+
+const handleCallInvite = async ({ conversationId, callType: incomingType, from }) => {
+  if (callVisible.value) {
+    const socket = getSocket()
+    socket?.emit('call_answer', {
+      conversationId,
+      targetUserId: from.id,
+      accepted: false,
+      callType: incomingType
+    })
+    return
+  }
+
+  if (activeConversation.value?._id !== conversationId) {
+    await chatStore.setActiveConversation(conversationId)
+  }
+
+  callType.value = incomingType
+  callDirection.value = 'incoming'
+  callPeer.value = from
+  callStatus.value = `${from.username} 邀请你进行${incomingType === 'video' ? '视频' : '语音'}通话`
+  callVisible.value = true
+}
+
+const handleCallAnswer = async ({ conversationId, accepted, from }) => {
+  if (!callVisible.value || activeConversation.value?._id !== conversationId || !peerConnection) return
+
+  if (!accepted) {
+    ElMessage.warning(`${from.username} 暂时无法接听`)
+    cleanupCall()
+    return
+  }
+
+  callPeer.value = from
+  callDirection.value = 'active'
+  callStatus.value = '正在连接...'
+  const offer = await peerConnection.createOffer()
+  await peerConnection.setLocalDescription(offer)
+  getSocket()?.emit('call_signal', {
+    conversationId,
+    targetUserId: from.id,
+    signal: { description: peerConnection.localDescription }
+  })
+}
+
+const handleCallSignal = async ({ conversationId, fromUserId, signal }) => {
+  if (!peerConnection || activeConversation.value?._id !== conversationId) return
+
+  try {
+    if (signal.description) {
+      await peerConnection.setRemoteDescription(signal.description)
+      if (signal.description.type === 'offer') {
+        const answer = await peerConnection.createAnswer()
+        await peerConnection.setLocalDescription(answer)
+        getSocket()?.emit('call_signal', {
+          conversationId,
+          targetUserId: fromUserId,
+          signal: { description: peerConnection.localDescription }
+        })
+      }
+    }
+
+    if (signal.candidate) {
+      await peerConnection.addIceCandidate(signal.candidate)
+    }
+  } catch (error) {
+    console.error('[Call] Failed to handle WebRTC signal:', error)
+  }
+}
+
+const handleCallEnd = ({ conversationId }) => {
+  if (activeConversation.value?._id !== conversationId) return
+  ElMessage.info('通话已结束')
+  endCall(false)
+}
+
 /**
  * 监听活跃会话变更
  * 执行滚动复位、加入 Socket 频道并触发消息已读上报
@@ -76,9 +338,7 @@ watch(() => activeConversation.value?._id, (newId) => {
       
       nextTick(() => {
         scrollToBottom() 
-        if (activeConversation.value?.myUnreadCount > 0) {
-          socket.emit('mark_read', { conversationId: newId })
-        }
+        markActiveConversationRead()
       })
     }
   }
@@ -92,6 +352,7 @@ watch(() => messages.value.length, (newLength, oldLength) => {
   if (newLength > oldLength) {
     nextTick(() => {
       scrollToBottom() 
+      markActiveConversationRead()
     })
   }
 })
@@ -126,6 +387,27 @@ const handleScroll = (e) => {
     loadMoreMessages()
   }
 }
+
+onMounted(() => {
+  const socket = getSocket()
+  if (!socket) return
+
+  socket.on('call_invite', handleCallInvite)
+  socket.on('call_answer', handleCallAnswer)
+  socket.on('call_signal', handleCallSignal)
+  socket.on('call_end', handleCallEnd)
+})
+
+onBeforeUnmount(() => {
+  endCall()
+  const socket = getSocket()
+  if (socket) {
+    socket.off('call_invite', handleCallInvite)
+    socket.off('call_answer', handleCallAnswer)
+    socket.off('call_signal', handleCallSignal)
+    socket.off('call_end', handleCallEnd)
+  }
+})
 </script>
 
 <template>
@@ -152,11 +434,11 @@ const handleScroll = (e) => {
       </div>
       
       <div class="header-actions">
-        <el-tooltip content="拨打电话(未实现)" placement="bottom">
-          <el-button text circle :icon="'Phone'" />
+        <el-tooltip content="语音通话" placement="bottom">
+          <el-button text circle :icon="'Phone'" @click="startCall('audio')" />
         </el-tooltip>
-        <el-tooltip content="视频通话(未实现)" placement="bottom">
-          <el-button text circle :icon="'VideoCamera'" />
+        <el-tooltip content="视频通话" placement="bottom">
+          <el-button text circle :icon="'VideoCamera'" @click="startCall('video')" />
         </el-tooltip>
         <el-dropdown trigger="click" placement="bottom-end">
           <el-button text circle :icon="'More'" />
@@ -199,6 +481,61 @@ const handleScroll = (e) => {
 
     <!-- 底部输入交互组件 -->
     <MessageInput :conversationId="activeConversation._id" />
+
+    <el-dialog
+      v-model="callVisible"
+      width="420px"
+      class="call-dialog"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <div class="call-panel">
+        <div class="call-peer">
+          <UserAvatar v-if="callPeer" :user="callPeer" :size="64" :showStatus="false" />
+          <h3>{{ callPeer?.username || '通话邀请' }}</h3>
+          <p>{{ callStatus }}</p>
+        </div>
+
+        <div v-if="callDirection !== 'incoming'" class="media-stage" :class="{ audio: callType === 'audio' }">
+          <video
+            v-if="callType === 'video'"
+            ref="remoteVideoRef"
+            class="remote-video"
+            autoplay
+            playsinline
+          ></video>
+          <video
+            v-if="callType === 'video'"
+            ref="localVideoRef"
+            class="local-video"
+            autoplay
+            muted
+            playsinline
+          ></video>
+          <div v-else class="audio-placeholder">
+            <el-icon :size="42"><Phone /></el-icon>
+          </div>
+        </div>
+
+        <div class="call-actions">
+          <template v-if="callDirection === 'incoming'">
+            <el-button circle type="danger" :icon="'Close'" @click="rejectCall" />
+            <el-button circle type="success" :icon="'Check'" @click="acceptCall" />
+          </template>
+          <template v-else>
+            <el-button circle :icon="isMuted ? 'Microphone' : 'Mute'" @click="toggleMute" />
+            <el-button
+              v-if="callType === 'video'"
+              circle
+              :icon="isCameraOff ? 'VideoCamera' : 'VideoPause'"
+              @click="toggleCamera"
+            />
+            <el-button circle type="danger" :icon="'PhoneFilled'" @click="endCall" />
+          </template>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -309,5 +646,83 @@ const handleScroll = (e) => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
   border-radius: 3px;
+}
+
+:deep(.call-dialog .el-dialog__body) {
+  padding: 0;
+}
+
+.call-panel {
+  padding: 24px;
+  background-color: var(--bg-panel);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.call-peer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.call-peer h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.call-peer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.media-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: var(--bg-dark);
+}
+
+.media-stage.audio {
+  aspect-ratio: 16 / 6;
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: var(--bg-dark);
+}
+
+.local-video {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--bg-panel);
+  background-color: var(--bg-dark);
+}
+
+.audio-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+}
+
+.call-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
 }
 </style>

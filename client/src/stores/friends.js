@@ -115,8 +115,11 @@ export const useFriendStore = defineStore('friends', {
      * @param {Object} request - 申请实体对象
      */
     receiveFriendRequest(request) {
-      // 采用乐观更新策略，立即推入列表前部
-      this.requestsList.unshift(request)
+      const exists = this.requestsList.some((item) => item.id === request.id)
+      if (!exists) {
+        // 采用乐观更新策略，立即推入列表前部
+        this.requestsList.unshift(request)
+      }
     }
   }
 })
